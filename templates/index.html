@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMForge – where AI models forge your dev tools.</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff; /* Keep a primary blue for now, can adjust to orange/yellow later */
+            --primary-rgb: 0, 123, 255;
+            
+            /* Dark Theme Palette - LeetCode Inspired */
+            --body-bg: #1e1e1e; /* Very dark gray, common in editors */
+            --body-color: #d4d4d4; /* Light gray for text */
+            --card-bg: #2a2a2e; /* Slightly lighter dark gray for cards */
+            --card-border-color: #3c3c40; /* Subtle border for cards */
+            --header-bg: #252528; /* Dark header */
+            --header-color: #efefef;
+            --header-border-accent: var(--primary-color);
+
+            --nav-tabs-link-color: #a0a0a0; /* Lighter gray for inactive tabs */
+            --nav-tabs-link-active-color: var(--primary-color); /* Accent for active tab text */
+            --nav-tabs-link-active-bg: #333336; /* Slightly different dark for active tab background */
+            --nav-tabs-border-color: #3c3c40;
+
+            --form-label-color: #c0c0c0;
+            --input-bg: #252528;
+            --input-border-color: #3c3c40;
+            --input-color: #d4d4d4;
+            --input-focus-border-color: var(--primary-color);
+            --input-placeholder-color: #6c757d;
+
+            --btn-primary-bg: var(--primary-color);
+            --btn-primary-border: var(--primary-color);
+            --btn-primary-hover-bg: #0056b3;
+            --btn-primary-hover-border: #0056b3;
+
+            --footer-text-color: #858796;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: var(--body-bg);
+            color: var(--body-color);
+            line-height: 1.6;
+        }
+
+        .main-header {
+            background-color: var(--header-bg);
+            color: var(--header-color);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+            border-bottom: 5px solid var(--header-border-accent);
+        }
+        .main-header h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+        }
+
+        .container {
+            max-width: 960px;
+        }
+
+        .nav-tabs .nav-item .nav-link {
+            color: var(--nav-tabs-link-color);
+            border: 1px solid transparent;
+            border-bottom: none;
+            font-weight: 600;
+        }
+        .nav-tabs .nav-item .nav-link.active,
+        .nav-tabs .nav-item .nav-link:hover {
+            color: var(--nav-tabs-link-active-color);
+            background-color: var(--nav-tabs-link-active-bg);
+            border-color: var(--nav-tabs-border-color) var(--nav-tabs-border-color) var(--nav-tabs-link-active-bg);
+        }
+        .nav-tabs {
+             border-bottom: 1px solid var(--nav-tabs-border-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border-color);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(0,0,0, 0.15); /* Darker shadow for dark theme */
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+        }
+        .card-header {
+            background-color: var(--header-bg); /* Use header-bg for consistency or a slightly lighter variant */
+            border-bottom: 1px solid var(--card-border-color);
+            color: var(--header-color);
+            font-weight: 700;
+            padding: 0.75rem 1.25rem;
+        }
+        .card-body {
+             padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--form-label-color);
+        }
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border-color);
+            color: var(--input-color);
+        }
+        .form-control::placeholder {
+            color: var(--input-placeholder-color);
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: var(--input-bg);
+            color: var(--input-color);
+            border-color: var(--input-focus-border-color);
+            box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+        }
+        /* Ensure selects show arrow correctly on dark bg */
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23d4d4d4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        }
+
+
+        #loadingSpinner, #analysisLoadingSpinner, #portfolioLoadingSpinner, #reactPortfolioLoadingSpinner {
+            display: none; /* Hidden by default */
+        }
+
+        .accordion-button {
+            background-color: var(--card-bg); /* Dark background for accordion button */
+            color: var(--body-color); /* Light text */
+        }
+        .accordion-button:not(.collapsed) {
+            color: var(--primary-color);
+            background-color: #333336; /* Slightly different dark for active accordion */
+        }
+        .accordion-button:focus {
+            box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+        }
+        .accordion-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border-color);
+        }
+
+        .generated-code-container {
+            max-height: 450px;
+            overflow-y: auto;
+            border: 1px solid var(--input-border-color);
+            border-radius: 0.25rem;
+            background-color: #272822; /* okaidia theme background - already dark */
+        }
+        pre[class*="language-"] {
+            margin-bottom: 0;
+            border-radius: 0.25rem;
+        }
+        
+        /* Button Overrides for Dark Theme */
+        .btn-primary {
+            background-color: var(--btn-primary-bg);
+            border-color: var(--btn-primary-border);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: var(--btn-primary-hover-bg);
+            border-color: var(--btn-primary-hover-border);
+            color: #fff;
+        }
+        .btn-success {
+            background-color: #198754; /* Keep Bootstrap success green, ensure text is light */
+            border-color: #198754;
+            color: #fff;
+        }
+         .btn-success:hover {
+            background-color: #157347;
+            border-color: #146c43;
+            color: #fff;
+        }
+        .btn-info {
+            background-color: #0dcaf0; /* Keep Bootstrap info cyan, ensure text is dark or light if needed */
+            border-color: #0dcaf0;
+            color: #000; /* Dark text for light cyan */
+        }
+        .btn-info:hover {
+            background-color: #31d2f2;
+            border-color: #25cff2;
+            color: #000;
+        }
+        .btn-warning {
+            background-color: #ffc107; /* Keep Bootstrap warning yellow */
+            border-color: #ffc107;
+            color: #000; /* Dark text for yellow */
+        }
+        .btn-warning:hover {
+            background-color: #ffca2c;
+            border-color: #ffc720;
+            color: #000;
+        }
+
+        /* Alert Overrides for Dark Theme */
+        .alert {
+            border-width: 0px;
+            border-left-width: 5px;
+            border-radius: 0.25rem;
+        }
+        .alert-success {
+            background-color: #1c3a2c; /* Dark green background */
+            color: #a3cfbb; /* Light green text */
+            border-left-color: #28a745;
+        }
+        .alert-danger {
+            background-color: #402123; /* Dark red background */
+            color: #f5c6cb; /* Light red text */
+            border-left-color: #dc3545;
+        }
+        .alert-warning {
+            background-color: #403822; /* Dark yellow background */
+            color: #ffeeba; /* Light yellow text */
+            border-left-color: #ffc107;
+        }
+        .alert-info {
+            background-color: #1c3c46; /* Dark cyan background */
+            color: #bee5eb; /* Light cyan text */
+            border-left-color: #17a2b8;
+        }
+        .alert .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%); /* Make close button visible on dark alerts */
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            font-size: 0.9em;
+            color: var(--footer-text-color);
+            border-top: 1px solid var(--card-border-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <h1><i class="bi bi-stars"></i> LLMForge – where AI models forge your dev tools.</h1>
+    </header>
+
+    <div class="container mt-4">
+        <ul class="nav nav-tabs mb-3" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="generate-code-tab" data-bs-toggle="tab" data-bs-target="#generate-code-pane" type="button" role="tab" aria-controls="generate-code-pane" aria-selected="true"><i class="bi bi-code-slash"></i> Generate Code</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analyze-project-tab" data-bs-toggle="tab" data-bs-target="#analyze-project-pane" type="button" role="tab" aria-controls="analyze-project-pane" aria-selected="false"><i class="bi bi-search"></i> Analyze Project</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="generate-portfolio-tab" data-bs-toggle="tab" data-bs-target="#generate-portfolio-pane" type="button" role="tab" aria-controls="generate-portfolio-pane" aria-selected="false"><i class="bi bi-palette"></i> Static Portfolio</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="generate-react-portfolio-tab" data-bs-toggle="tab" data-bs-target="#generate-react-portfolio-pane" type="button" role="tab" aria-controls="generate-react-portfolio-pane" aria-selected="false"><i class="bi bi-browser-chrome"></i> React Portfolio (Src)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabContent">
+            <!-- Code Generation Tab -->
+            <div class="tab-pane fade show active" id="generate-code-pane" role="tabpanel" aria-labelledby="generate-code-tab">
+                <div class="card">
+                    <div class="card-header">Generate Code Snippet</div>
+                    <div class="card-body">
+                        <form id="codeGenerationForm">
+                            <div class="mb-3">
+                                <label for="prompt" class="form-label">Prompt:</label>
+                                <textarea class="form-control" id="prompt" name="prompt" rows="3" required placeholder="e.g., Python function to calculate factorial"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="openrouterModel" class="form-label">Select OpenRouter Model:</label>
+                                <select class="form-select" id="openrouterModel" name="openrouter_model_name" required>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-gear-fill"></i> Generate Code</button>
+                            <div id="loadingSpinner" class="spinner-border text-primary ms-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </form>
+                        <div class="mt-4">
+                            <h6>Generated Code:</h6>
+                            <div class="generated-code-container">
+                                <pre><code id="generatedCode" class="language-python"># Code will appear here...</code></pre>
+                            </div>
+                        </div>
+                        <div id="codeGenerationError" class="alert alert-danger alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Analysis Tab -->
+            <div class="tab-pane fade" id="analyze-project-pane" role="tabpanel" aria-labelledby="analyze-project-tab">
+                <div class="card">
+                    <div class="card-header">Upload and Analyze Project (Python)</div>
+                    <div class="card-body">
+                        <form id="projectUploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="projectFile" class="form-label">Upload Project (ZIP file):</label>
+                                <input type="file" class="form-control" id="projectFile" name="file" accept=".zip" required>
+                            </div>
+                             <div class="mb-3">
+                                <label for="analysisOpenrouterModel" class="form-label">Select OpenRouter Model for Summary:</label>
+                                <select class="form-select" id="analysisOpenrouterModel" name="openrouter_model_name" required>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-cloud-upload-fill"></i> Upload and Analyze</button>
+                            <div id="analysisLoadingSpinner" class="spinner-border text-success ms-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </form>
+
+                        <div id="analysisResults" class="mt-4" style="display: none;">
+                            <h6>Project Analysis Results (<span id="analyzedProjectId"></span>):</h6>
+                            <div class="accordion" id="analysisAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="llmSummaryHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#llmSummaryCollapse" aria-expanded="false" aria-controls="llmSummaryCollapse">
+                                            LLM Generated Summary
+                                        </button>
+                                    </h2>
+                                    <div id="llmSummaryCollapse" class="accordion-collapse collapse" aria-labelledby="llmSummaryHeading" data-bs-parent="#analysisAccordion">
+                                        <div class="card-body">
+                                            <pre><code id="llmProjectSummary" class="language-markdown"></code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="technicalDetailsHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#technicalDetailsCollapse" aria-expanded="false" aria-controls="technicalDetailsCollapse">
+                                            Technical Details (JSON)
+                                        </button>
+                                    </h2>
+                                    <div id="technicalDetailsCollapse" class="accordion-collapse collapse" aria-labelledby="technicalDetailsHeading" data-bs-parent="#analysisAccordion">
+                                        <div class="card-body">
+                                            <pre><code id="technicalProjectAnalysis" class="language-json"></code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                         <div id="analysisError" class="alert alert-danger alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Static Portfolio Generation Tab -->
+            <div class="tab-pane fade" id="generate-portfolio-pane" role="tabpanel" aria-labelledby="generate-portfolio-tab">
+                <div class="card">
+                    <div class="card-header">Generate Static Web Portfolio</div>
+                    <div class="card-body">
+                        <form id="portfolioGenerationForm">
+                            <div class="mb-3">
+                                <label for="portfolioPrompt" class="form-label">Portfolio Description:</label>
+                                <textarea class="form-control" id="portfolioPrompt" name="prompt" rows="4" required placeholder="e.g., A clean and modern portfolio for a freelance web developer specializing in React, showcasing 3 projects and a contact form."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="portfolioOpenrouterModel" class="form-label">Select OpenRouter Model:</label>
+                                <select class="form-select" id="portfolioOpenrouterModel" name="openrouter_model_name" required>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-info"><i class="bi bi-file-zip-fill"></i> Generate Portfolio (ZIP)</button> <!-- btn-info might need text-white if its default text is dark -->
+                            <div id="portfolioLoadingSpinner" class="spinner-border text-info ms-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </form>
+                        <div id="portfolioSuccess" class="alert alert-success alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <div id="portfolioError" class="alert alert-danger alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- React Portfolio Generation Tab -->
+            <div class="tab-pane fade" id="generate-react-portfolio-pane" role="tabpanel" aria-labelledby="generate-react-portfolio-tab">
+                <div class="card">
+                    <div class="card-header">Generate React Portfolio Source Code</div>
+                    <div class="card-body">
+                        <div class="alert alert-warning" role="alert">
+                            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Important Note!</h4>
+                            <p>This tool generates React.js **source code files** (components, CSS, etc.) based on your prompt. It does NOT produce a ready-to-deploy website.</p>
+                            <hr>
+                            <p class="mb-0">You will need to have Node.js and npm/yarn installed. Create a new React project (e.g., using <code>npx create-react-app my-portfolio</code> or <code>npm create vite@latest my-portfolio -- --template react</code>), then replace the placeholder files in the <code>src</code> and <code>public</code> directories with the ones generated in the downloaded ZIP file.</p>
+                        </div>
+                        <form id="reactPortfolioGenerationForm">
+                            <div class="mb-3">
+                                <label for="reactPortfolioPrompt" class="form-label">Portfolio Description (for React):</label>
+                                <textarea class="form-control" id="reactPortfolioPrompt" name="prompt" rows="4" required placeholder="e.g., A React-based portfolio for a data scientist, highlighting key skills, projects with brief descriptions, and a publications section."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="reactPortfolioOpenrouterModel" class="form-label">Select OpenRouter Model:</label>
+                                <select class="form-select" id="reactPortfolioOpenrouterModel" name="openrouter_model_name" required>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-warning"><i class="bi bi-file-earmark-code-fill"></i> Generate React Source (ZIP)</button>
+                            <div id="reactPortfolioLoadingSpinner" class="spinner-border text-warning ms-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </form>
+                        <div id="reactPortfolioSuccess" class="alert alert-success alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <div id="reactPortfolioError" class="alert alert-danger alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 LLMForge – where AI models forge your dev tools.. Powered by OpenRouter LLMs.</p>
+        <p>Created and developed by Chinmay Solanki.</p>
+        <p>For any suggestions, updates, and improvements, please contact: <a href="mailto:chinmaysolanki123@gmail.com">chinmaysolanki123@gmail.com</a></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+    <script>
+        // Common DOM Elements
+        const openrouterModelSelect = document.getElementById('openrouterModel');
+        const analysisOpenrouterModelSelect = document.getElementById('analysisOpenrouterModel');
+        const portfolioOpenrouterModelSelect = document.getElementById('portfolioOpenrouterModel');
+        const reactPortfolioOpenrouterModelSelect = document.getElementById('reactPortfolioOpenrouterModel');
+
+        // Code Generation Elements
+        const codeGenerationForm = document.getElementById('codeGenerationForm');
+        const generatedCodeElement = document.getElementById('generatedCode');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const codeGenerationErrorDiv = document.getElementById('codeGenerationError');
+
+        // Project Analysis Elements
+        const projectUploadForm = document.getElementById('projectUploadForm');
+        const llmProjectSummaryElement = document.getElementById('llmProjectSummary');
+        const technicalProjectAnalysisElement = document.getElementById('technicalProjectAnalysis');
+        const analysisResultsDiv = document.getElementById('analysisResults');
+        const analyzedProjectIdSpan = document.getElementById('analyzedProjectId');
+        const analysisLoadingSpinner = document.getElementById('analysisLoadingSpinner');
+        const analysisErrorDiv = document.getElementById('analysisError');
+
+        // Static Portfolio Generation Elements
+        const portfolioGenerationForm = document.getElementById('portfolioGenerationForm');
+        const portfolioLoadingSpinner = document.getElementById('portfolioLoadingSpinner');
+        const portfolioSuccessDiv = document.getElementById('portfolioSuccess');
+        const portfolioErrorDiv = document.getElementById('portfolioError');
+
+        // React Portfolio Generation Elements
+        const reactPortfolioGenerationForm = document.getElementById('reactPortfolioGenerationForm');
+        const reactPortfolioLoadingSpinner = document.getElementById('reactPortfolioLoadingSpinner');
+        const reactPortfolioSuccessDiv = document.getElementById('reactPortfolioSuccess');
+        const reactPortfolioErrorDiv = document.getElementById('reactPortfolioError');
+
+
+        async function fetchOpenRouterModels() {
+            try {
+                const response = await fetch('/api/openrouter-models');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const models = await response.json();
+                populateModelDropdown(openrouterModelSelect, models, 'openai/gpt-3.5-turbo');
+                populateModelDropdown(analysisOpenrouterModelSelect, models, 'google/gemini-pro');
+                populateModelDropdown(portfolioOpenrouterModelSelect, models, 'google/gemini-2.5-pro-preview');
+                populateModelDropdown(reactPortfolioOpenrouterModelSelect, models, 'google/gemini-2.5-pro-preview'); // Also use a powerful model here
+            
+            } catch (error) {
+                console.error("Failed to fetch OpenRouter models:", error);
+                const errorMsg = 'Error loading models';
+                [openrouterModelSelect, analysisOpenrouterModelSelect, portfolioOpenrouterModelSelect, reactPortfolioOpenrouterModelSelect].forEach(sel => {
+                    if (sel) sel.innerHTML = `<option value="">${errorMsg}</option>`;
+                });
+            }
+        }
+
+        function populateModelDropdown(selectElement, models, preferredModel) {
+            if (!selectElement) return;
+            selectElement.innerHTML = ''; // Clear existing options
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                selectElement.appendChild(option);
+            });
+            if (models.includes(preferredModel)) {
+                selectElement.value = preferredModel;
+            } else if (models.length > 0) {
+                selectElement.value = models[0];
+            }
+        }
+
+        function displayAlert(alertElement, message, isSuccess = false) {
+            if (!alertElement) return;
+            alertElement.innerHTML = message; // Allow basic HTML for icons etc.
+            // Ensure the close button is part of the message for dismissible alerts
+            const closeButtonHTML = `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+            alertElement.innerHTML = message + closeButtonHTML; 
+            alertElement.className = `alert alert-${isSuccess ? 'success' : 'danger'} alert-dismissible fade show mt-3`;
+            alertElement.style.display = 'block';
+        }
+
+        function hideMessages(...elements) {
+            elements.forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+        }
+
+        // Code Generation Form Submission
+        if (codeGenerationForm) {
+            codeGenerationForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                hideMessages(codeGenerationErrorDiv);
+                loadingSpinner.style.display = 'inline-block';
+                generatedCodeElement.textContent = '# Generating code...';
+                Prism.highlightElement(generatedCodeElement);
+
+                const formData = new FormData(codeGenerationForm);
+                const data = {
+                    prompt: formData.get('prompt'),
+                    openrouter_model_name: formData.get('openrouter_model_name')
+                };
+
+                try {
+                    const response = await fetch('/api/generate-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ detail: `HTTP error! Status: ${response.status}` }));
+                        throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    generatedCodeElement.textContent = result.generated_code;
+                    Prism.highlightElement(generatedCodeElement);
+
+                } catch (error) {
+                    console.error('Error generating code:', error);
+                    generatedCodeElement.textContent = `# Error: ${error.message}`;
+                    Prism.highlightElement(generatedCodeElement);
+                    displayAlert(codeGenerationErrorDiv, `<i class="bi bi-exclamation-circle-fill"></i> Failed to generate code: ${error.message}`);
+                } finally {
+                    loadingSpinner.style.display = 'none';
+                }
+            });
+        }
+
+        // Project Analysis Form Submission
+        if (projectUploadForm) {
+            projectUploadForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                hideMessages(analysisErrorDiv, analysisResultsDiv);
+                analysisLoadingSpinner.style.display = 'inline-block';
+                llmProjectSummaryElement.textContent = '';
+                technicalProjectAnalysisElement.textContent = '';
+                analyzedProjectIdSpan.textContent = '';
+                Prism.highlightElement(llmProjectSummaryElement);
+                Prism.highlightElement(technicalProjectAnalysisElement);
+
+                const formData = new FormData(projectUploadForm);
+                const modelName = formData.get('openrouter_model_name');
+                const projectFile = formData.get('file');
+                
+                const requestFormData = new FormData();
+                requestFormData.append('file', projectFile);
+
+                try {
+                    const response = await fetch(`/api/upload-and-analyze-project?openrouter_model_name=${encodeURIComponent(modelName)}`, {
+                        method: 'POST',
+                        body: requestFormData,
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ detail: `HTTP error! Status: ${response.status}` }));
+                        let errorMsg = errorData.detail || `HTTP error! status: ${response.status}`;
+                        if (typeof errorData.detail === 'object' && errorData.detail.error) {
+                            errorMsg = errorData.detail.error;
+                        }
+                        throw new Error(errorMsg);
+                    }
+
+                    const result = await response.json();
+                    llmProjectSummaryElement.textContent = result.llm_summary || "No LLM summary generated.";
+                    technicalProjectAnalysisElement.textContent = JSON.stringify(result.technical_analysis, null, 2);
+                    analyzedProjectIdSpan.textContent = result.project_id || "N/A";
+                    
+                    Prism.highlightElement(llmProjectSummaryElement);
+                    Prism.highlightElement(technicalProjectAnalysisElement);
+                    
+                    analysisResultsDiv.style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error analyzing project:', error);
+                    displayAlert(analysisErrorDiv, `<i class="bi bi-exclamation-circle-fill"></i> Error: ${error.message}`);
+                } finally {
+                    analysisLoadingSpinner.style.display = 'none';
+                }
+            });
+        }
+
+        // Static Portfolio Generation Form Submission
+        if (portfolioGenerationForm) {
+            portfolioGenerationForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                hideMessages(portfolioErrorDiv, portfolioSuccessDiv);
+                portfolioLoadingSpinner.style.display = 'inline-block';
+
+                const formData = new FormData(portfolioGenerationForm);
+                const data = {
+                    prompt: formData.get('prompt'),
+                    openrouter_model_name: formData.get('portfolioOpenrouterModel').value
+                };
+
+                try {
+                    const response = await fetch('/api/generate-portfolio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ detail: `Failed to generate portfolio. Server returned status: ${response.status}` }));
+                        throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'portfolio.zip'; 
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    displayAlert(portfolioSuccessDiv, '<i class="bi bi-check-circle-fill"></i> Portfolio ZIP successfully generated and download started!', true);
+
+                } catch (error) {
+                    console.error('Error generating portfolio:', error);
+                    displayAlert(portfolioErrorDiv, `<i class="bi bi-exclamation-circle-fill"></i> Failed to generate portfolio: ${error.message}`);
+                } finally {
+                    portfolioLoadingSpinner.style.display = 'none';
+                }
+            });
+        }
+
+        // React Portfolio Generation Form Submission
+        if (reactPortfolioGenerationForm) {
+            reactPortfolioGenerationForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                hideMessages(reactPortfolioErrorDiv, reactPortfolioSuccessDiv);
+                reactPortfolioLoadingSpinner.style.display = 'inline-block';
+
+                const formData = new FormData(reactPortfolioGenerationForm);
+                const data = {
+                    prompt: formData.get('prompt'),
+                    openrouter_model_name: formData.get('reactPortfolioOpenrouterModel').value // Ensure correct model name is fetched
+                };
+
+                try {
+                    const response = await fetch('/api/generate-react-portfolio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ detail: `Failed to generate React portfolio. Server returned status: ${response.status}` }));
+                        throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'react_portfolio_src.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    displayAlert(reactPortfolioSuccessDiv, '<i class="bi bi-check-circle-fill"></i> React portfolio source code ZIP successfully generated and download started!', true);
+
+                } catch (error) {
+                    console.error('Error generating React portfolio:', error);
+                    displayAlert(reactPortfolioErrorDiv, `<i class="bi bi-exclamation-circle-fill"></i> Failed to generate React portfolio source: ${error.message}`);
+                } finally {
+                    reactPortfolioLoadingSpinner.style.display = 'none';
+                }
+            });
+        }
+
+
+        // Fetch models when the page loads
+        document.addEventListener('DOMContentLoaded', fetchOpenRouterModels);
+    </script>
+</body>
+</html> 
