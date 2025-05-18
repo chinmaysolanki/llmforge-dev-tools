@@ -256,6 +256,9 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="generate-react-portfolio-tab" data-bs-toggle="tab" data-bs-target="#generate-react-portfolio-pane" type="button" role="tab" aria-controls="generate-react-portfolio-pane" aria-selected="false"><i class="bi bi-browser-chrome"></i> React Portfolio (Src)</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="generate-cv-tab" data-bs-toggle="tab" data-bs-target="#generate-cv-pane" type="button" role="tab" aria-controls="generate-cv-pane" aria-selected="false"><i class="bi bi-file-earmark-person-fill"></i> CV Generator</button>
+            </li>
         </ul>
 
         <div class="tab-content" id="mainTabContent">
@@ -419,6 +422,186 @@
                 </div>
             </div>
 
+            <!-- CV Generation Tab -->
+            <div class="tab-pane fade" id="generate-cv-pane" role="tabpanel" aria-labelledby="generate-cv-tab">
+                <div class="card">
+                    <div class="card-header">Generate Professional CV with Structured Data</div>
+                    <div class="card-body">
+                        <form id="cvGenerationForm">
+                            <h5 class="mt-3">Personal Details</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvFullName" class="form-label">Full Name:</label>
+                                    <input type="text" class="form-control" id="cvFullName" name="fullName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvEmail" class="form-label">Email:</label>
+                                    <input type="email" class="form-control" id="cvEmail" name="email" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvPhone" class="form-label">Phone: (Optional)</label>
+                                    <input type="tel" class="form-control" id="cvPhone" name="phone">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvLinkedIn" class="form-label">LinkedIn URL: (Optional)</label>
+                                    <input type="url" class="form-control" id="cvLinkedIn" name="linkedinUrl" placeholder="https://linkedin.com/in/yourprofile">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvGitHub" class="form-label">GitHub URL: (Optional)</label>
+                                    <input type="url" class="form-control" id="cvGitHub" name="githubUrl" placeholder="https://github.com/yourusername">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvWebsite" class="form-label">Portfolio/Website URL: (Optional)</label>
+                                    <input type="url" class="form-control" id="cvWebsite" name="websiteUrl">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cvSummary" class="form-label">Professional Summary:</label>
+                                <textarea class="form-control" id="cvSummary" name="summary" rows="4" required></textarea>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="isFresherCheckbox">
+                                <label class="form-check-label" for="isFresherCheckbox">
+                                    I am a fresher (no prior work experience)
+                                </label>
+                            </div>
+
+                            <hr>
+                            <div id="workExperienceSection">
+                                <h5 class="mt-3">Work Experience</h5>
+                                <div id="experienceEntriesContainer"></div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addExperienceBtn"><i class="bi bi-plus-circle"></i> Add Experience</button>
+                            </div>
+
+                            <hr>
+                            <h5 class="mt-3">Education</h5>
+                            <div id="educationEntriesContainer"></div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addEducationBtn"><i class="bi bi-plus-circle"></i> Add Education</button>
+
+                            <hr>
+                            <h5 class="mt-3">Projects</h5>
+                            <div id="projectEntriesContainer"></div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addProjectBtn"><i class="bi bi-plus-circle"></i> Add Project</button>
+
+                            <hr>
+                            <div class="mb-3">
+                                <label for="cvSkills" class="form-label">Skills (comma-separated):</label>
+                                <input type="text" class="form-control" id="cvSkills" name="skills" placeholder="e.g., Python, JavaScript, Project Management">
+                            </div>
+                            
+                            <hr>
+                            <button type="submit" class="btn btn-primary" onclick="console.log('Generate CV button was clicked directly (inline onclick test)!');"><i class="bi bi-magic"></i> Generate CV</button>
+                            <div id="cvLoadingSpinner" class="spinner-border text-primary ms-2" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </form>
+
+                        <!-- Templates for dynamic entries (hidden) -->
+                        <div id="experienceEntryTemplate" style="display: none;">
+                            <div class="dynamic-entry card card-body mb-3">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Job Title:</label>
+                                        <input type="text" class="form-control expJobTitle" required>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Company Name:</label>
+                                        <input type="text" class="form-control expCompanyName" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                     <div class="col-md-6 mb-2">
+                                        <label class="form-label">Location: (Optional)</label>
+                                        <input type="text" class="form-control expLocation">
+                                    </div>
+                                   <div class="col-md-3 mb-2">
+                                        <label class="form-label">Start Date:</label>
+                                        <input type="text" class="form-control expStartDate" placeholder="e.g., Jan 2020" required>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">End Date:</label>
+                                        <input type="text" class="form-control expEndDate" placeholder="e.g., Present or Dec 2022" required>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Description (Responsibilities/Achievements):</label>
+                                    <textarea class="form-control expDescription" rows="3" required></textarea>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm remove-entry-btn" style="width: auto; align-self: flex-end;">Remove</button>
+                            </div>
+                        </div>
+
+                        <div id="educationEntryTemplate" style="display: none;">
+                            <div class="dynamic-entry card card-body mb-3">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Degree Name:</label>
+                                        <input type="text" class="form-control eduDegreeName" required>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Institution Name:</label>
+                                        <input type="text" class="form-control eduInstitutionName" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Graduation Date (or Expected):</label>
+                                        <input type="text" class="form-control eduGraduationDate" placeholder="e.g., May 2019" required>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Details (Optional):</label>
+                                        <input type="text" class="form-control eduDetails" placeholder="e.g., GPA, Honors, Relevant Coursework">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm remove-entry-btn" style="width: auto; align-self: flex-end;">Remove</button>
+                            </div>
+                        </div>
+
+                        <div id="projectEntryTemplate" style="display: none;">
+                            <div class="dynamic-entry card card-body mb-3">
+                                <div class="mb-2">
+                                    <label class="form-label">Project Name:</label>
+                                    <input type="text" class="form-control projProjectName" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Description:</label>
+                                    <textarea class="form-control projDescription" rows="3" required></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Technologies Used (comma-separated, Optional):</label>
+                                        <input type="text" class="form-control projTechnologiesUsed">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Project Link (Optional):</label>
+                                        <input type="url" class="form-control projLink">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm remove-entry-btn" style="width: auto; align-self: flex-end;">Remove</button>
+                            </div>
+                        </div>
+                        <!-- End Templates -->
+
+                        <div class="mt-4">
+                            <h6>Generated CV Preview:</h6>
+                            <iframe id="cvDisplayFrame" style="width: 100%; height: 600px; border: 1px solid var(--input-border-color); border-radius: 0.25rem;" title="CV Preview"></iframe>
+                        </div>
+                        <div id="cvSuccess" class="alert alert-success alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <div id="cvError" class="alert alert-danger alert-dismissible fade show mt-3" role="alert" style="display: none;">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -439,6 +622,7 @@
         const analysisOpenrouterModelSelect = document.getElementById('analysisOpenrouterModel');
         const portfolioOpenrouterModelSelect = document.getElementById('portfolioOpenrouterModel');
         const reactPortfolioOpenrouterModelSelect = document.getElementById('reactPortfolioOpenrouterModel');
+        // const cvOpenrouterModelSelect = document.getElementById('cvOpenrouterModel'); // CV model select removed
 
         // Code Generation Elements
         const codeGenerationForm = document.getElementById('codeGenerationForm');
@@ -467,6 +651,24 @@
         const reactPortfolioSuccessDiv = document.getElementById('reactPortfolioSuccess');
         const reactPortfolioErrorDiv = document.getElementById('reactPortfolioError');
 
+        // CV Generation Elements
+        const cvGenerationForm = document.getElementById('cvGenerationForm');
+        const cvLoadingSpinner = document.getElementById('cvLoadingSpinner');
+        const cvDisplayFrame = document.getElementById('cvDisplayFrame');
+        const cvSuccessDiv = document.getElementById('cvSuccess');
+        const cvErrorDiv = document.getElementById('cvError');
+        const isFresherCheckbox = document.getElementById('isFresherCheckbox');
+        const workExperienceSection = document.getElementById('workExperienceSection');
+
+        console.log('Attempting to find cvGenerationForm:', cvGenerationForm); // Log the form element itself
+
+        // Log to confirm script is running up to this point
+        console.log("CV Generator related DOM elements are being retrieved.");
+        if (!cvGenerationForm) console.error("cvGenerationForm not found");
+        if (!cvLoadingSpinner) console.error("cvLoadingSpinner not found");
+        if (!cvDisplayFrame) console.error("cvDisplayFrame not found");
+        if (!isFresherCheckbox) console.error("isFresherCheckbox not found");
+        if (!workExperienceSection) console.error("workExperienceSection not found");
 
         async function fetchOpenRouterModels() {
             try {
@@ -478,11 +680,13 @@
                 populateModelDropdown(openrouterModelSelect, models, 'openai/gpt-3.5-turbo');
                 populateModelDropdown(analysisOpenrouterModelSelect, models, 'google/gemini-pro');
                 populateModelDropdown(portfolioOpenrouterModelSelect, models, 'google/gemini-2.5-pro-preview');
-                populateModelDropdown(reactPortfolioOpenrouterModelSelect, models, 'google/gemini-2.5-pro-preview'); // Also use a powerful model here
+                populateModelDropdown(reactPortfolioOpenrouterModelSelect, models, 'google/gemini-2.5-pro-preview');
+                // populateModelDropdown(cvOpenrouterModelSelect, models, 'google/gemini-2.5-pro-preview'); // Dropdown removed for CV
             
             } catch (error) {
                 console.error("Failed to fetch OpenRouter models:", error);
                 const errorMsg = 'Error loading models';
+                // Adjusted to exclude cvOpenrouterModelSelect
                 [openrouterModelSelect, analysisOpenrouterModelSelect, portfolioOpenrouterModelSelect, reactPortfolioOpenrouterModelSelect].forEach(sel => {
                     if (sel) sel.innerHTML = `<option value="">${errorMsg}</option>`;
                 });
@@ -710,9 +914,163 @@
             });
         }
 
+        // Event listener for the fresher checkbox
+        if (isFresherCheckbox && workExperienceSection) {
+            isFresherCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    workExperienceSection.style.display = 'none';
+                } else {
+                    workExperienceSection.style.display = 'block';
+                }
+            });
+        }
+
+        // Function to add dynamic entries
+        function addDynamicEntry(templateId, containerId) {
+            const template = document.getElementById(templateId);
+            const container = document.getElementById(containerId);
+            if (!template || !container) return;
+
+            const clone = template.firstElementChild.cloneNode(true);
+            
+            // Clear input values in the clone
+            clone.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea').forEach(input => input.value = '');
+            // For select elements if any: clone.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+            
+            const removeBtn = clone.querySelector('.remove-entry-btn');
+            if(removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    this.closest('.dynamic-entry').remove();
+                });
+            }
+            container.appendChild(clone);
+        }
+
+        // Attach event listeners for adding dynamic entries
+        document.getElementById('addExperienceBtn')?.addEventListener('click', () => addDynamicEntry('experienceEntryTemplate', 'experienceEntriesContainer'));
+        document.getElementById('addEducationBtn')?.addEventListener('click', () => addDynamicEntry('educationEntryTemplate', 'educationEntriesContainer'));
+        document.getElementById('addProjectBtn')?.addEventListener('click', () => addDynamicEntry('projectEntryTemplate', 'projectEntriesContainer'));
+
+        // Initialize with one entry for each section
+        function initializeDynamicSections(){
+            if(document.getElementById('experienceEntriesContainer') && document.getElementById('experienceEntriesContainer').children.length === 0) {
+                 addDynamicEntry('experienceEntryTemplate', 'experienceEntriesContainer');
+            }
+            if(document.getElementById('educationEntriesContainer') && document.getElementById('educationEntriesContainer').children.length === 0) {
+                addDynamicEntry('educationEntryTemplate', 'educationEntriesContainer');
+            }
+            if(document.getElementById('projectEntriesContainer') && document.getElementById('projectEntriesContainer').children.length === 0) {
+                 addDynamicEntry('projectEntryTemplate', 'projectEntriesContainer');
+            }
+        }
 
         // Fetch models when the page loads
-        document.addEventListener('DOMContentLoaded', fetchOpenRouterModels);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOMContentLoaded event fired. Initializing page scripts."); // Debug log
+            fetchOpenRouterModels();
+            initializeDynamicSections(); // Add initial dynamic entries
+
+            // CV Generation Form Submission - MOVED HERE
+            const cvForm = document.getElementById('cvGenerationForm');
+            if (cvForm) {
+                console.log("Attempting to attach event listener to cvGenerationForm inside DOMContentLoaded."); // Debug log
+                cvForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    console.log("cvGenerationForm submitted! (listener attached in DOMContentLoaded)"); // Debug log: Check if event fires
+                    hideMessages(cvErrorDiv, cvSuccessDiv);
+                    cvLoadingSpinner.style.display = 'inline-block';
+                    if(cvDisplayFrame.contentWindow && cvDisplayFrame.contentWindow.document.body) {
+                        cvDisplayFrame.contentWindow.document.body.innerHTML = '<p style="padding: 20px; color: var(--body-color);">Generating CV...</p>';
+                    } else {
+                        cvDisplayFrame.srcdoc = '<p style="padding: 20px; color: var(--body-color);">Generating CV...</p>';
+                    }
+
+                    const isFresher = document.getElementById('isFresherCheckbox').checked;
+
+                    const cvData = {
+                        full_name: document.getElementById('cvFullName').value,
+                        email: document.getElementById('cvEmail').value,
+                        phone: document.getElementById('cvPhone').value || null,
+                        linkedin_url: document.getElementById('cvLinkedIn').value || null,
+                        github_url: document.getElementById('cvGitHub').value || null,
+                        website_url: document.getElementById('cvWebsite').value || null,
+                        professional_summary: document.getElementById('cvSummary').value,
+                        experiences: [], // Initialize as empty
+                        educations: [],
+                        projects: [],
+                        skills: document.getElementById('cvSkills').value.split(',').map(skill => skill.trim()).filter(skill => skill),
+                        // openrouter_model_name: "google/gemini-2.5-pro-preview", // Backend uses fixed model, no need to send
+                        is_fresher: isFresherCheckbox.checked 
+                    };
+
+                    if (!isFresher) { // Only collect experiences if not a fresher
+                        document.querySelectorAll('#experienceEntriesContainer .dynamic-entry').forEach(entry => {
+                            cvData.experiences.push({
+                                job_title: entry.querySelector('.expJobTitle').value,
+                                company_name: entry.querySelector('.expCompanyName').value,
+                                location: entry.querySelector('.expLocation').value || null,
+                                start_date: entry.querySelector('.expStartDate').value,
+                                end_date: entry.querySelector('.expEndDate').value,
+                                description: entry.querySelector('.expDescription').value
+                            });
+                        });
+                    }
+
+                    document.querySelectorAll('#educationEntriesContainer .dynamic-entry').forEach(entry => {
+                        cvData.educations.push({
+                            degree_name: entry.querySelector('.eduDegreeName').value,
+                            institution_name: entry.querySelector('.eduInstitutionName').value,
+                            graduation_date: entry.querySelector('.eduGraduationDate').value,
+                            details: entry.querySelector('.eduDetails').value || null
+                        });
+                    });
+
+                    document.querySelectorAll('#projectEntriesContainer .dynamic-entry').forEach(entry => {
+                        cvData.projects.push({
+                            project_name: entry.querySelector('.projProjectName').value,
+                            description: entry.querySelector('.projDescription').value,
+                            technologies_used: entry.querySelector('.projTechnologiesUsed').value.split(',').map(tech => tech.trim()).filter(tech => tech),
+                            link: entry.querySelector('.projLink').value || null
+                        });
+                    });
+
+                    try {
+                        const response = await fetch('/api/generate-cv', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(cvData),
+                        });
+
+                        if (!response.ok) {
+                            // Try to parse error detail from JSON response, fallback to status text
+                            let errorDetail = `HTTP error! Status: ${response.status}`;
+                            try {
+                                const errorData = await response.json();
+                                errorDetail = errorData.detail || errorDetail;
+                            } catch (e) { /* Ignore if response is not JSON */ }
+                            throw new Error(errorDetail);
+                        }
+
+                        const cvHtml = await response.text(); 
+                        cvDisplayFrame.srcdoc = cvHtml;
+                        displayAlert(cvSuccessDiv, '<i class="bi bi-check-circle-fill"></i> CV generated successfully!', true);
+
+                    } catch (error) {
+                        console.error('Error generating CV:', error);
+                        if(cvDisplayFrame.contentWindow && cvDisplayFrame.contentWindow.document.body) {
+                             cvDisplayFrame.contentWindow.document.body.innerHTML = `<p style=\'padding: 20px; color: var(--body-color);\'>Error: ${error.message}</p>`;
+                        } else {
+                            cvDisplayFrame.srcdoc = `<p style=\'padding: 20px; color: var(--body-color);\'>Error: ${error.message}</p>`;
+                        }
+                        displayAlert(cvErrorDiv, `<i class="bi bi-exclamation-circle-fill"></i> Failed to generate CV: ${error.message}`);
+                    } finally {
+                        cvLoadingSpinner.style.display = 'none';
+                    }
+                });
+            } else {
+                console.error("Could not find cvGenerationForm inside DOMContentLoaded!");
+            }
+        });
     </script>
 </body>
 </html> 

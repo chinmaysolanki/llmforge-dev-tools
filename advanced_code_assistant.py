@@ -68,24 +68,82 @@ class ReactPortfolioRequest(BaseModel):
     prompt: str
     openrouter_model_name: str
 
+# class CVGenerationRequest(BaseModel): # Old model, will be replaced
+#     prompt: str
+#     openrouter_model_name: str
+
+# --- New Pydantic Models for Structured CV Data ---
+class ExperienceEntry(BaseModel):
+    job_title: str
+    company_name: str
+    location: Optional[str] = None
+    start_date: str
+    end_date: str # Can be "Present"
+    description: str # Preferably bullet points, passed as a single string
+
+class EducationEntry(BaseModel):
+    degree_name: str
+    institution_name: str
+    graduation_date: str # Or expected date
+    details: Optional[str] = None # e.g., GPA, relevant coursework, honors
+
+class ProjectEntry(BaseModel):
+    project_name: str
+    description: str
+    technologies_used: Optional[List[str]] = None
+    link: Optional[str] = None
+
+class CVDataRequest(BaseModel):
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    website_url: Optional[str] = None
+    professional_summary: str
+    experiences: List[ExperienceEntry] = []
+    educations: List[EducationEntry] = []
+    projects: List[ProjectEntry] = []
+    skills: List[str] = [] # List of skill strings
+    is_fresher: Optional[bool] = False
+# --- End New Pydantic Models ---
+
 # --- Code Assistant Logic ---
 class OpenRouterCodeAssistant:
     def __init__(self):
         self.openrouter_client = None
-        # WARNING: Hardcoding API keys is generally not recommended for production environments.
-        # It's better to use environment variables (e.g., via a .env file).
-        openrouter_api_key_hardcoded = "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"  # User-provided key
+        
+        openrouter_api_key_env = os.getenv("OPENROUTER_API_KEY")
+        # The previously hardcoded key, kept here for reference if needed for a specific local fallback, but env var is primary.
+        openrouter_api_key_hardcoded_fallback = "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"
         openrouter_base_url_env = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
         
-        if openrouter_api_key_hardcoded:
-            self.openrouter_client = openai.OpenAI(
-                api_key=openrouter_api_key_hardcoded,
-                base_url=openrouter_base_url_env
-            )
-            print(f"OpenRouter client initialized using hardcoded API key (Base URL: {openrouter_base_url_env}).")
+        api_key_to_use = None
+        source_of_key = ""
+
+        if openrouter_api_key_env:
+            api_key_to_use = openrouter_api_key_env
+            source_of_key = "environment variable OPENROUTER_API_KEY"
+        elif openrouter_api_key_hardcoded_fallback: # Fallback only if env var is MISSING
+            # This fallback is generally not recommended for production.
+            # For Vercel, ensure OPENROUTER_API_KEY is set in project environment variables.
+            api_key_to_use = openrouter_api_key_hardcoded_fallback
+            source_of_key = "hardcoded fallback key"
+            print(f"WARNING: Using {source_of_key}. For secure and proper configuration, please set the OPENROUTER_API_KEY environment variable.")
+        
+        if api_key_to_use:
+            try:
+                self.openrouter_client = openai.OpenAI(
+                    api_key=api_key_to_use,
+                    base_url=openrouter_base_url_env
+                )
+                print(f"OpenRouter client initialized using API key from {source_of_key} (Base URL: {openrouter_base_url_env}).")
+            except Exception as e:
+                print(f"CRITICAL: Failed to initialize OpenRouter client with key from {source_of_key}: {e}")
+                self.openrouter_client = None # Ensure it's None on failure
         else:
-            # This case should ideally not be reached if a key is hardcoded
-            print("CRITICAL: Hardcoded OpenRouter API key is empty. Application will not function correctly.")
+            print("CRITICAL: OpenRouter API key not found in environment variables (OPENROUTER_API_KEY) or as a hardcoded fallback. API calls will fail.")
+            self.openrouter_client = None
             
         self.supported_languages = {
             "python": {"extensions": [".py"]},
@@ -422,6 +480,141 @@ class OpenRouterCodeAssistant:
             print(f"Generic error during React portfolio generation (model={request.openrouter_model_name}): {e}")
             raise HTTPException(status_code=500, detail=f"Error generating React portfolio: {str(e)}")
 
+    def generate_cv_html(self, request: CVDataRequest) -> str:
+        if not self.openrouter_client:
+            raise HTTPException(status_code=503, detail="OpenRouter client not initialized. Check API key.")
+
+        fixed_cv_model = "google/gemini-2.5-pro-preview" # Fixed model for CV generation
+
+        # Construct the detailed user data section for the prompt
+        user_data_details = f"Full Name: {request.full_name}\n"
+        user_data_details += f"Email: {request.email}\n"
+        if request.phone: user_data_details += f"Phone: {request.phone}\n"
+        if request.linkedin_url: user_data_details += f"LinkedIn: {request.linkedin_url}\n"
+        if request.github_url: user_data_details += f"GitHub: {request.github_url}\n"
+        if request.website_url: user_data_details += f"Website: {request.website_url}\n"
+        user_data_details += f"\nProfessional Summary:\n{request.professional_summary}\n"
+        
+        if request.is_fresher:
+            user_data_details += "\nUser is a fresher (no prior work experience).\n"
+        elif request.experiences: # Only add experience if not fresher AND experiences exist
+            user_data_details += "\nWork Experience:\n"
+            for exp in request.experiences:
+                user_data_details += f"  - Job Title: {exp.job_title}\n"
+                user_data_details += f"    Company: {exp.company_name}{f', {exp.location}' if exp.location else ''}\n"
+                user_data_details += f"    Dates: {exp.start_date} - {exp.end_date}\n"
+                user_data_details += f"    Description:\n      {exp.description.replace('\n', '\n      ')}\n"
+        
+        if request.educations:
+            user_data_details += "\nEducation:\n"
+            for edu in request.educations:
+                user_data_details += f"  - Degree: {edu.degree_name}\n"
+                user_data_details += f"    Institution: {edu.institution_name}\n"
+                user_data_details += f"    Graduation Date: {edu.graduation_date}\n"
+                if edu.details: user_data_details += f"    Details: {edu.details}\n"
+
+        if request.projects:
+            user_data_details += "\nProjects:\n"
+            for proj in request.projects:
+                user_data_details += f"  - Project Name: {proj.project_name}\n"
+                user_data_details += f"    Description:\n      {proj.description.replace('\n', '\n      ')}\n"
+                if proj.technologies_used: user_data_details += f"    Technologies: {', '.join(proj.technologies_used)}\n"
+                if proj.link: user_data_details += f"    Link: {proj.link}\n"
+
+        if request.skills:
+            user_data_details += "\nSkills:\n  - " + ", ".join(request.skills) + "\n"
+        
+        fresher_guidance = ""
+        if request.is_fresher:
+            fresher_guidance = "Since the user is a fresher, focus primarily on their Education, Projects, and Skills. The Work Experience section should be omitted or very minimal if any placeholder is absolutely needed (prefer omission)."
+
+        meta_prompt = f"""
+        You are an expert CV and resume designer. Your task is to generate a complete, professional, single HTML file for a CV based on the structured user data provided below.
+        The CV should be designed to look good when printed on A4 paper. Use the provided data to populate the relevant sections of the CV.
+        {fresher_guidance}
+
+        **Structured User Data:**
+        {user_data_details}
+
+        # This was in the original cv generation and it contains the user inputs such as name email and etc and it is needed for this cv generation
+
+        **Key Requirements for the HTML CV:**
+        1.  **Single HTML File**: All CSS must be embedded within `<style>` tags in the `<head>` section of the HTML. Do not link to external CSS files.
+        2.  **A4 Paper Size Simulation**: The CSS should style the main CV container to approximate A4 dimensions. Example CSS to guide you (adapt and expand as needed):
+            ```css
+            body {{
+                background-color: #f0f0f0; /* So the A4 page stands out */
+                display: flex;
+                justify-content: center;
+                align-items: flex-start; /* Align page to top */
+                padding: 20px 0;
+                margin: 0;
+                font-family: 'Arial', sans-serif; /* Or another professional font like 'Lato', 'Open Sans' */
+                line-height: 1.6;
+            }}
+            .cv-container {{
+                background-color: #fff;
+                width: 210mm;
+                min-height: 290mm; /* Slightly less than 297mm to allow for browser differences, content drives height */
+                padding: 15mm;
+                border: 1px solid #ccc;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                box-sizing: border-box;
+            }}
+            h1, h2, h3, h4 {{ margin-top: 0.5em; margin-bottom: 0.3em; color: #333; }}
+            h1 {{ font-size: 24pt; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 0.2em; margin-bottom: 0.5em; }}
+            h2 {{ font-size: 16pt; border-bottom: 1px solid #eee; padding-bottom: 0.1em; margin-top: 1em; }}
+            p {{ margin: 0.2em 0; }}
+            ul {{ padding-left: 20px; margin: 0.2em 0; }}
+            li {{ margin-bottom: 0.1em; }}
+            .contact-info p {{ margin: 0; font-size: 10pt; }}
+            .section {{ margin-bottom: 1em; }}
+            .job, .education-entry, .project-entry {{ margin-bottom: 0.8em; }}
+            .job-title, .degree-name, .project-name {{ font-weight: bold; font-size: 12pt; color: #444; }}
+            .company-name, .institution-name {{ font-style: italic; font-size: 11pt; color: #555; }}
+            .dates {{ float: right; font-size: 10pt; color: #666; }}
+            .description ul li {{ font-size: 10pt; }}
+            /* Add more professional styling for overall look and feel. Consider good typography and spacing. */
+            ```
+        3.  **Professional Design**: Clean, modern, readable layout. Ensure good visual hierarchy.
+        4.  **Standard CV Sections**: Use the provided structured data to create sections like Contact Information, Summary, Work Experience (if applicable and data provided), Education, Projects, Skills. Format them professionally.
+        5.  **HTML Structure**: Use semantic HTML5 tags (`<header>`, `<section>`, `<article>`, `<h2>`, etc.).
+        6.  **No JavaScript**: Output pure HTML and CSS.
+
+        **Output directly the complete HTML content. Do not wrap it in markdown backticks or provide any explanations outside the HTML itself.**
+        Start with `<!DOCTYPE html><html><head>...</head><body><div class="cv-container">...</div></body></html>`
+        """
+        try:
+            print(f"Generating CV HTML with fixed model: {fixed_cv_model} using structured data.")
+            completion = self.openrouter_client.chat.completions.create(
+                model=fixed_cv_model, # Use the fixed model
+                messages=[
+                    {"role": "system", "content": "You are an AI assistant that generates a complete, professional, single HTML file for a CV, styled for A4 paper, using provided structured data."},
+                    {"role": "user", "content": meta_prompt}
+                ],
+                temperature=0.5,
+                max_tokens=4000
+            )
+            cv_html = completion.choices[0].message.content.strip()
+            
+            # Rudimentary check for HTML structure
+            if not (cv_html.lower().startswith("<!doctype html") or cv_html.lower().startswith("<html>")):
+                if "```html" in cv_html and "```" in cv_html.split("```html")[1]:
+                    cv_html = cv_html.split("```html")[1].split("```")[0].strip()
+                elif cv_html.startswith("```") and cv_html.endswith("```"):
+                     cv_html = cv_html[3:-3].strip()
+                else:
+                    print(f"Warning: CV generation response for model {fixed_cv_model} did not start with HTML doctype as expected. Returning raw response. Check LLM output for issues.")
+
+            return cv_html
+
+        except openai.APIError as e:
+            print(f"OpenAI APIError during CV generation (model={fixed_cv_model}): {e}")
+            raise HTTPException(status_code=e.status_code if hasattr(e, 'status_code') else 500, detail=f"OpenRouter API error during CV generation: {e.message if hasattr(e, 'message') else str(e)}")
+        except Exception as e:
+            print(f"Generic error during CV generation (model={fixed_cv_model}): {e}")
+            raise HTTPException(status_code=500, detail=f"Error generating CV: {str(e)}")
+
     # --- Project Analysis Methods (largely unchanged but ensure they use Path objects) ---
     def _is_relevant_file(self, file_path: Path, language: str) -> bool:
         lang_config = self.supported_languages.get(language.lower())
@@ -748,6 +941,24 @@ async def generate_react_portfolio_endpoint(request: ReactPortfolioRequest):
     except Exception as e:
         print(f"Unexpected error in /api/generate-react-portfolio: {e}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred while generating React portfolio: {str(e)}")
+
+@app.post("/api/generate-cv", summary="Generate CV from Prompt")
+async def generate_cv_endpoint(request: CVDataRequest):
+    """
+    Generates a professional CV in HTML format based on a user prompt.
+    The HTML includes embedded CSS styled for A4 paper.
+    """
+    try:
+        # The assistant object is already instantiated globally in this file
+        # For Vercel, instantiating per request or globally needs consideration for state.
+        # Global `assistant = OpenRouterCodeAssistant()` should be fine for Vercel's stateless model.
+        cv_html_output = assistant.generate_cv_html(request)
+        return HTMLResponse(content=cv_html_output)
+    except HTTPException as e:
+        raise e # Re-raise HTTPException to preserve status code and detail
+    except Exception as e:
+        print(f"Unexpected error in /api/generate-cv: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while generating CV: {str(e)}")
 
 # The following block will be removed for Vercel deployment:
 # if __name__ == "__main__":
