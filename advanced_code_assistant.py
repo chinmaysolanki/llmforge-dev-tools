@@ -97,27 +97,27 @@ class OpenRouterCodeAssistant:
         TEMP_PROJECT_DIR.mkdir(parents=True, exist_ok=True)
         print(f"Temporary project uploads will be stored in: {TEMP_PROJECT_DIR.resolve()}")
 
-        # Clean up old temporary project directories on startup
-        self._cleanup_old_projects()
+        # Clean up old temporary project directories on startup - Commented out for Vercel
+        # self._cleanup_old_projects()
 
-    def _cleanup_old_projects(self):
-        # Simple cleanup: remove any directories in TEMP_PROJECT_DIR older than, say, 24 hours
-        # For a more robust solution, track project creation times
-        cutoff = 24 * 60 * 60  # 24 hours in seconds
-        now = tempfile._get_candidate_names() # A bit of a hack to get a timestamp-like string for comparison logic
-        # This cleanup is very basic. A real app would need better tracking or a scheduled job.
-        try:
-            for item in TEMP_PROJECT_DIR.iterdir():
-                if item.is_dir():
-                    try:
-                        # Basic check, not a perfect age check
-                        if item.stat().st_mtime < (float(now) - cutoff if now else 0): # Simplistic age check
-                             shutil.rmtree(item)
-                             print(f"Cleaned up old project directory: {item}")
-                    except Exception as e:
-                        print(f"Error during cleanup of {item}: {e}")
-        except Exception as e:
-            print(f"Error during initial cleanup scan: {e}")
+    # def _cleanup_old_projects(self):
+    #     # Simple cleanup: remove any directories in TEMP_PROJECT_DIR older than, say, 24 hours
+    #     # For a more robust solution, track project creation times
+    #     cutoff = 24 * 60 * 60  # 24 hours in seconds
+    #     now = tempfile._get_candidate_names() # A bit of a hack to get a timestamp-like string for comparison logic
+    #     # This cleanup is very basic. A real app would need better tracking or a scheduled job.
+    #     try:
+    #         for item in TEMP_PROJECT_DIR.iterdir():
+    #             if item.is_dir():
+    #                 try:
+    #                     # Basic check, not a perfect age check
+    #                     if item.stat().st_mtime < (float(now) - cutoff if now else 0): # Simplistic age check
+    #                          shutil.rmtree(item)
+    #                          print(f"Cleaned up old project directory: {item}")
+    #                 except Exception as e:
+    #                     print(f"Error during cleanup of {item}: {e}")
+    #     except Exception as e:
+    #         print(f"Error during initial cleanup scan: {e}")
 
     def _get_project_path(self, project_id: str) -> Path:
         # Sanitize project_id to prevent path traversal issues
